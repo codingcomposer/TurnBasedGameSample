@@ -10,5 +10,6 @@ namespace TurnBasedRPG
         public string unitName;
         public UnitAction attack;
         public UnitAction skill;
+        public Stat initialStat;
     }
 }

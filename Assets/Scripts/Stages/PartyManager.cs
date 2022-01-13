@@ -6,6 +6,8 @@ using System.Linq;
 namespace TurnBasedRPG {
     public class PartyManager
     {
+
+        public List<UnitBehaviour> attackQueue = new List<UnitBehaviour>();
         private List<UnitBehaviour> myUnits = new List<UnitBehaviour>();
         private List<UnitBehaviour> opponentUnits = new List<UnitBehaviour>();
 
@@ -27,9 +29,9 @@ namespace TurnBasedRPG {
             }
         }
         
-        public Queue<UnitBehaviour> GetAttackQueue()
+        // The function doesn't exactly returns Queue, as some of the units may die while waiting for the queue and needed to be removed from it.
+        public void FillAttackQueue()
         {
-            Queue<UnitBehaviour> queue = new Queue<UnitBehaviour>();
             List<UnitBehaviour> list = new List<UnitBehaviour>();
             list.AddRange(myUnits);
             list.AddRange(opponentUnits);
@@ -40,11 +42,39 @@ namespace TurnBasedRPG {
                 list[i] = list[rand];
                 list[rand] = temp;
             }
-            for(int i = 0; i < list.Count; i++)
-            {
-                queue.Enqueue(list[i]);
+            attackQueue.AddRange(list);
+        }
+
+        public UnitBehaviour DequeueWhenAttack()
+        {
+            UnitBehaviour unit = null;
+            if (attackQueue.Count > 0)
+            {  
+                unit = attackQueue[0];
+                attackQueue.RemoveAt(0);
             }
-            return queue;
+            return unit;
+        }
+
+        public void UnitDead(UnitBehaviour deadUnit)
+        {
+            if (myUnits.Contains(deadUnit))
+            {
+                myUnits.Remove(deadUnit);
+            }
+            else if (opponentUnits.Contains(deadUnit))
+            {
+                opponentUnits.Remove(deadUnit);
+            }
+            attackQueue.Remove(deadUnit);
+            if(myUnits.Count < 1)
+            {
+                StageManager.lose.Invoke();
+            }
+            else if(opponentUnits.Count < 1)
+            {
+                StageManager.win.Invoke();
+            }
         }
     }
 }

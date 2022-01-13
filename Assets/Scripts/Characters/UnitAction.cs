@@ -18,5 +18,13 @@ namespace TurnBasedRPG
         [SerializeField]
         private string name;
 
+        public long PhysicalAttackPower { get { return physicalAttackPower; } }
+        [SerializeField]
+        private long physicalAttackPower;
+
+        public long MagicAttackPower { get { return magicAttackPower; } }
+        [SerializeField]
+        private long magicAttackPower;
+
     }
 }

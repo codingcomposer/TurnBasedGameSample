@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace TurnBasedRPG {
+namespace TurnBasedRPG
+{
     public class StageManager : MonoBehaviour
     {
         // stage
@@ -12,12 +13,17 @@ namespace TurnBasedRPG {
         public GameObject loadingMessage;
         public static UnityEvent unitActionFinishedEvent = new UnityEvent();
         public MeshRenderer groundRenderer;
+        public Transform friendlyUnitsTr;
+        public Transform hostileUnitsTr;
 
-        private Queue<UnitBehaviour> attackQueue = new Queue<UnitBehaviour>();
+        public static UnityEvent win = new UnityEvent();
+        public static UnityEvent lose = new UnityEvent();
+        public GameObject resultPanel;
         private bool gameEnd;
         private bool unitActionIsFinished = false;
         private WaitUntil waitUntilUnitActionFinished;
         private PartyManager partyManager = new PartyManager();
+        private WaitForSecondsRealtime termBetweenTurns = new WaitForSecondsRealtime(0.5f);
 
         private void Awake()
         {
@@ -25,12 +31,14 @@ namespace TurnBasedRPG {
             unitActionFinishedEvent.AddListener(OnUnitActionFinished);
             waitUntilUnitActionFinished = new WaitUntil(() => unitActionIsFinished);
             StartCoroutine(WaitForAssetsAndGo());
+            win.AddListener(delegate { PrintResult("Win!"); });
+            lose.AddListener(delegate { PrintResult("Lose!"); });
         }
 
         private IEnumerator WaitForAssetsAndGo()
         {
             GameObject loadingMessageInstance = Instantiate(loadingMessage);
-            
+
             yield return new WaitUntil(() => LoadedData.assetsLoaded);
             Destroy(loadingMessageInstance);
             string stageName = GameObject.Find("DataHolder").GetComponent<StageDataHolder>().stageName;
@@ -49,9 +57,12 @@ namespace TurnBasedRPG {
         private void SpawnMyUnits()
         {
             GameObject[] myUnits = GameObject.Find("DataHolder").GetComponent<StageDataHolder>().myUnits;
-            for(int i = 0; i < myUnits.Length; i++)
+            for (int i = 0; i < myUnits.Length; i++)
             {
-                Instantiate(myUnits[i], GetRandomPositionInsideBattleGround(true), Quaternion.identity).GetComponent<UnitBehaviour>().Initialize(true, partyManager);
+                GameObject instance = Instantiate(myUnits[i], friendlyUnitsTr);
+                instance.transform.position = GetSpawnPosition(true, i, myUnits.Length);
+                instance.transform.rotation = Quaternion.identity;
+                instance.GetComponent<UnitBehaviour>().Initialize(true, partyManager);
             }
         }
 
@@ -60,23 +71,20 @@ namespace TurnBasedRPG {
             string[] enemyUnitNames = StageDataModel.EnemyUnitNames;
             for (int i = 0; i < enemyUnitNames.Length; i++)
             {
-                Instantiate(LoadedData.unitBundle.LoadAsset<GameObject>(enemyUnitNames[i]), GetRandomPositionInsideBattleGround(false), Quaternion.identity).GetComponent<UnitBehaviour>().Initialize(false, partyManager);
+                GameObject instance = Instantiate(LoadedData.unitBundle.LoadAsset<GameObject>(enemyUnitNames[i]), hostileUnitsTr);
+                instance.transform.position = GetSpawnPosition(false, i, enemyUnitNames.Length);
+                instance.transform.rotation = Quaternion.identity;
+                instance.GetComponent<UnitBehaviour>().Initialize(false, partyManager);
             }
         }
 
-        private Vector3 GetRandomPositionInsideBattleGround(bool faction)
+        private Vector3 GetSpawnPosition(bool faction, int factionUnitIndex, int factionUnitCount)
         {
+            float minX = faction ? groundRenderer.bounds.min.x : 0f;
+            float maxX = faction ? 0f : groundRenderer.bounds.max.x;
             Vector3 position = new Vector3();
-            if (faction)
-            {
-                position.x = Random.Range(groundRenderer.bounds.min.x, 0f);
-                position.z = Random.Range(groundRenderer.bounds.min.z, groundRenderer.bounds.max.z);
-            }
-            else
-            {
-                position.x = Random.Range(0f, groundRenderer.bounds.max.z);
-                position.z = Random.Range(groundRenderer.bounds.min.z, groundRenderer.bounds.max.z);
-            }
+            position.x = minX + (maxX - minX) * ((float)factionUnitIndex / factionUnitCount);
+            position.z = Random.Range(groundRenderer.bounds.min.z, groundRenderer.bounds.max.z);
             return position;
         }
 
@@ -94,16 +102,16 @@ namespace TurnBasedRPG {
         {
             while (!gameEnd)
             {
-                if(attackQueue.Count < 1)
+                yield return termBetweenTurns;
+                if (partyManager.attackQueue.Count < 1)
                 {
-                    attackQueue = partyManager.GetAttackQueue();
-                    if(attackQueue.Count < 1)
+                    partyManager.FillAttackQueue();
+                    if (partyManager.attackQueue.Count < 1)
                     {
                         break;
                     }
                 }
-                Debug.Log("here");
-                UnitBehaviour turnUnit = attackQueue.Dequeue();
+                UnitBehaviour turnUnit = partyManager.DequeueWhenAttack();
                 if (turnUnit.IsPlayerFaction)
                 {
                     battlePlayerUI.ShowUI(turnUnit);
@@ -115,6 +123,14 @@ namespace TurnBasedRPG {
                 yield return waitUntilUnitActionFinished;
                 unitActionIsFinished = false;
             }
+        }
+
+        private void PrintResult(string result)
+        {
+            gameEnd = true;
+            resultPanel.SetActive(true);
+            TMPro.TextMeshProUGUI text = resultPanel.GetComponentInChildren<TMPro.TextMeshProUGUI>();
+            text.text = result;
         }
     }
 }
