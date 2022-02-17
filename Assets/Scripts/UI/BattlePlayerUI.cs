@@ -16,6 +16,7 @@ namespace TurnBasedRPG
         public GameObject panel;
         public GameObject selectTargetTextPanel;
         public Button attackButton;
+        public Button useItemButton;
         public Button doNothingButton;
         public TextMeshProUGUI unitNameText;
         public TextMeshProUGUI attackButtonText;
@@ -31,6 +32,7 @@ namespace TurnBasedRPG
         private void Awake()
         {
             attackButton.onClick.AddListener(OnAttackButtonClicked);
+            useItemButton.onClick.AddListener(OnUseItemButtonClicked);
             doNothingButton.onClick.AddListener(OnDoNothingButtonClicked);
             mouseOver.AddListener(OnMouseOverTr);
             mouseClick.AddListener(OnMouseClickTr);
@@ -93,6 +95,11 @@ namespace TurnBasedRPG
             panel.SetActive(false);
             selectTargetTextPanel.SetActive(true);
             selectingUnit = true;
+        }
+
+        private void OnUseItemButtonClicked()
+        {
+
         }
 
 

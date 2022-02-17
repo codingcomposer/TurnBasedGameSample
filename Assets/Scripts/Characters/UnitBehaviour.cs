@@ -12,7 +12,6 @@ namespace TurnBasedRPG
 
         public UnitDataModel unitDataModel;
         public uint level;
-        public RPGCharacterAnimsFREE.RPGCharacterController rpgCharacterController;
         private bool moveFinished;
         private WaitUntil waitUntilMoveFinished;
         private WaitUntil waitUntilAttackActionFinished;
@@ -31,6 +30,7 @@ namespace TurnBasedRPG
         private TMPro.TextMeshProUGUI damageText;
         private void Awake()
         {
+            animator.runtimeAnimatorController = Resources.Load<RuntimeAnimatorController>("Character");
             animator.Play("Idle");
             waitUntilMoveFinished = new WaitUntil(() => moveFinished);
             waitUntilAttackActionFinished = new WaitUntil(() => attackActionFinished);
@@ -38,8 +38,8 @@ namespace TurnBasedRPG
             damageText = damageCanvas.GetComponentInChildren<TMPro.TextMeshProUGUI>();
             damageCanvas.transform.rotation = Camera.main.transform.rotation;
             damageCanvas.SetActive(false);
-            GameObject sword = Instantiate(LoadedData.unitBundle.LoadAsset<GameObject>("2Hand-Sword"), weaponTr);
-            sword.transform.localRotation = Quaternion.identity;
+            //GameObject sword = Instantiate(LoadedData.unitBundle.LoadAsset<GameObject>("2Hand-Sword"), weaponTr);
+            //sword.transform.localRotation = Quaternion.identity;
         }
 
         public void Initialize(bool _faction, PartyManager _partyManager)
@@ -110,19 +110,19 @@ namespace TurnBasedRPG
         {
             attackAnimationFinished = false;
             animator.Play("Attack");
+            StartCoroutine(AnimationEventGenerator());
             yield return new WaitUntil(() => attackAnimationFinished);
             attackActionFinished = true;
         }
 
-        // Called from the animation event. Deals damages.
-        protected void Hit()
+        private IEnumerator AnimationEventGenerator()
         {
+            yield return new WaitForSeconds(animator.GetCurrentAnimatorClipInfo(0).Length / 2f);
             target.Attacked(this, unitDataModel.attack.PhysicalAttackPower, unitDataModel.attack.MagicAttackPower);
         }
 
         public void AttackAnimationFinished()
         {
-            Debug.Log("here");
             attackAnimationFinished = true;
         }
 

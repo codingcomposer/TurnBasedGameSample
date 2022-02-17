@@ -14,21 +14,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   unitName: Character1
   attack:
-    targeting: 0
-    actionRange: 10
+    targeting: 2
+    actionRange: 7
     name: Attack 1
     physicalAttackPower: 20
     magicAttackPower: 20
   skill:
-    targeting: 0
+    targeting: 2
     actionRange: 10
     name: Skill 1
     physicalAttackPower: 20
     magicAttackPower: 20
   initialStat:
-    hp: 1000
-    defense: 100
-    magicDefense: 100
+    hp: 500
+    defense: 35
+    magicDefense: 35
     dexterity: 0
     agility: 0
     incrementalHP: 100

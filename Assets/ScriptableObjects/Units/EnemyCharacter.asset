@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 982f7ca3eee671942baf86b827da1a1a, type: 3}
   m_Name: EnemyCharacter
   m_EditorClassIdentifier: 
-  unitName: Character1
+  unitName: EnemyCharacter1
   attack:
     targeting: 0
-    actionRange: 10
+    actionRange: 7
     name: Attack 1
     physicalAttackPower: 20
     magicAttackPower: 20
